@@ -1,0 +1,43 @@
+From 6adc47c37ff98da9148700d7bc94e5f2b4c82a37 Mon Sep 17 00:00:00 2001
+From: rook <rook@localhost>
+Date: Fri, 2 Oct 2026 03:42:15 +0000
+Subject: [PATCH] libhijacker: add PS5 13.x allproc offsets (13.00-13.60) from
+ kstuff-lite
+
+---
+ source/libhijacker/source/offsets.cpp | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/source/libhijacker/source/offsets.cpp b/source/libhijacker/source/offsets.cpp
+index 1a76661..22fb44f 100644
+--- a/source/libhijacker/source/offsets.cpp
++++ b/source/libhijacker/source/offsets.cpp
+@@ -74,6 +74,12 @@ static constexpr uint32_t V1220 = 0x12200000;
+ static constexpr uint32_t V1240 = 0x12400000;
+ static constexpr uint32_t V1260 = 0x12600000;
+ static constexpr uint32_t V1270 = 0x12700000;
++/* 13.x - allproc from kstuff-lite prosper0gdb/offsets/13_*.h (same table as 12.x: other lists TBD). */
++static constexpr uint32_t V1300 = 0x13000000;
++static constexpr uint32_t V1320 = 0x13200000;
++static constexpr uint32_t V1340 = 0x13400000;
++static constexpr uint32_t V1342 = 0x13420000;
++static constexpr uint32_t V1360 = 0x13600000;
+ 
+ 
+ 
+@@ -138,6 +144,12 @@ namespace offsets {
+             case V1270:
+                 allprocOffset = 0x2885E00; /* kstuff 12_00..12_70 */
+                 break;
++            case V1300: case V1320:
++                allprocOffset = 0x28C5E00; /* kstuff 13_00, 13_20 */
++                break;
++            case V1340: case V1342: case V1360:
++                allprocOffset = 0x28C9E80; /* kstuff 13_40, 13_42, 13_60 */
++                break;
+             default:
+                 LOG_WARN("Unsupported firmware version: 0x%x", getSystemSwVersion() & VERSION_MASK);
+                 allprocOffset = -1;
+-- 
+2.53.0
+

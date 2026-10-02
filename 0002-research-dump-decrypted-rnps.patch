@@ -1,0 +1,57 @@
+diff --git a/source/shellui/src/hook_functions.cpp b/source/shellui/src/hook_functions.cpp
+index 284e842..cccfc0e 100644
+--- a/source/shellui/src/hook_functions.cpp
++++ b/source/shellui/src/hook_functions.cpp
+@@ -26,6 +26,7 @@ along with this program; see the file COPYING. If not, see
+ #include <sys/_pthreadtypes.h>
+ #include <sys/signal.h>
+ #include <fstream>
++#include <cstdio>
+ #include <unistd.h>
+ #include <vector>
+ #include <sys/socket.h>
+@@ -179,6 +180,32 @@ int ioctl_hook(int fd, unsigned long request, void *argp) {
+                   args->buffer, args->size, b0, b1, b2, b3);
+ #endif
+       unsigned char *buffer = static_cast<unsigned char *>(args->buffer);
++      /*
++       * RESEARCH ONLY (13.x HomeUI profile work): dump the decrypted bundle.
++       * Tries several writable dirs and notifies so we can see the hook fire.
++       */
++      {
++        static int dump_count = 0;
++        if (dump_count < 8 && args->size > 0x1000) {
++          static const char *const dirs[] = {"/data/OnionHEN", "/system_tmp",
++                                             "/data", "/user/data"};
++          char path[112];
++          bool saved = false;
++          for (const char *dir : dirs) {
++            snprintf(path, sizeof(path), "%s/rnps_dump_%02d_%d.bin", dir,
++                     dump_count, (int)args->size);
++            FILE *df = fopen(path, "wb");
++            if (!df) continue;
++            fwrite(buffer, 1, (size_t)args->size, df);
++            fclose(df);
++            saved = true;
++            break;
++          }
++          notify("RNPS hook #%d size=%d saved=%s", dump_count, (int)args->size,
++                 saved ? path : "NO");
++          dump_count++;
++        }
++      }
+       patch_settings_bundle(buffer, args->size);
+       patch_homeui_top_nav(buffer, &args->size, args->size);
+   }
+diff --git a/source/shellui/src/prx.cpp b/source/shellui/src/prx.cpp
+index 105eca9..5e1aff3 100644
+--- a/source/shellui/src/prx.cpp
++++ b/source/shellui/src/prx.cpp
+@@ -620,6 +620,7 @@ bool install_hooks(const ShellImages& img) {
+     return false;
+   }
+   LOG_DEBUG("Detoured ioctl to ioctl_hook");
++  notify("RNPS ioctl hook installed");
+ 
+   // --- BootHelper.Boot: 3-arg then 2-arg ---
+   if (!install_mono_hook({"BootHelper.Boot(3)", img.app_system, "Sce.Vsh.ShellUI.AppSystem",
